@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: takehome  
+    ports:
+      - "5432:5432"
+  
+  backend:
+    build: ./generic_food_processing_company_site
+    command: >
+      sh -c "python manage.py makemigrations && python manage.py migrate &&
+      python manage.py extract_info Factory_environmental_test_data.xlsx &&
+      python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./generic_food_processing_company_site:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DB_NAME: takehome
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_HOST: db
+      DB_PORT: 5432
+
+
+  frontend:
+    build: ./generic_food_processing_company_site_fe
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
